@@ -18,8 +18,6 @@ defmodule MCTS.Search do
   alias __MODULE__
   alias MCTS.Policies
 
-  require Logger
-
   def new(%game{} = game_state, opts \\ []) do
     selection_policy = Keyword.get(opts, :selection_policy, &Policies.min_visits_selection_policy/1)
     expansion_policy = Keyword.get(opts, :expansion_policy, &Policies.first_policy/1)
