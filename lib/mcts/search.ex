@@ -171,9 +171,15 @@ defmodule MCTS.Search do
 
   def update(%Search{} = search, new_root_game_state) do
     new_root_vertex_id = search.game.hash(new_root_game_state)
-    new_transpositions = Map.put(search.transpositions, new_root_vertex_id, new_root_game_state)
-    new_vertex_ids = Graph.reachable(search.graph, [new_root_vertex_id])
-    new_graph = Graph.subgraph(search.graph, new_vertex_ids)
+
+    new_transpositions = Map.put_new(search.transpositions, new_root_vertex_id, new_root_game_state)
+
+    new_graph = if Graph.has_vertex?(search.graph, new_root_vertex_id) do
+      reachable = Graph.reachable(search.graph, [new_root_vertex_id])
+      Graph.subgraph(search.graph, reachable)
+    else
+      Graph.new |> Graph.add_vertex(new_root_vertex_id)
+    end
 
     %Search{search |
       graph: new_graph,
