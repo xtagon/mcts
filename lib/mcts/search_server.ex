@@ -51,6 +51,22 @@ defmodule MCTS.SearchServer do
     GenServer.cast(pid, {:search, iterations})
   end
 
+  def select(pid) do
+    GenServer.cast(pid, :select)
+  end
+
+  def expand(pid) do
+    GenServer.cast(pid, :expand)
+  end
+
+  def simulate(pid) do
+    GenServer.cast(pid, :simulate)
+  end
+
+  def backpropagate(pid) do
+    GenServer.cast(pid, :backpropagate)
+  end
+
   def update(pid, new_game) do
     GenServer.cast(pid, {:update, new_game})
   end
@@ -127,6 +143,47 @@ defmodule MCTS.SearchServer do
 
     new_state = state
     |> Map.update(:iterations, iterations, &(&1 + iterations))
+    |> Map.put(:search, new_search)
+
+    {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_cast(:select, state) do
+    new_search = state.search |> Search.select
+
+    new_state = state
+    |> Map.put(:search, new_search)
+
+    {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_cast(:expand, state) do
+    new_search = state.search |> Search.expand
+
+    new_state = state
+    |> Map.put(:search, new_search)
+
+    {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_cast(:simulate, state) do
+    new_search = state.search |> Search.simulate
+
+    new_state = state
+    |> Map.put(:search, new_search)
+
+    {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_cast(:backpropagate, state) do
+    new_search = state.search |> Search.backpropagate
+
+    new_state = state
+    |> Map.update(:iterations, 1, &(&1 + 1))
     |> Map.put(:search, new_search)
 
     {:noreply, new_state}
