@@ -37,4 +37,12 @@ defmodule SearchTest do
     assert Graph.is_subgraph?(search1.graph, search50.graph)
     assert length(Graph.vertices(search1.graph)) < length(Graph.vertices(search50.graph))
   end
+
+  test "solutions/1 should not raise ArithmeticError for dividing by zero (score / visits) if not all nodes have been visited yet" do
+    {:ok, turn0} = Game.new
+    search0 = Search.new(turn0)
+    search1 = Search.search(search0)
+
+    Search.solutions(search1)
+  end
 end

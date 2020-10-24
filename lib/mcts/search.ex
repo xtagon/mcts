@@ -67,8 +67,8 @@ defmodule MCTS.Search do
       out_neighbors = Graph.out_neighbors(search.graph, current_vertex_id)
 
       choices = Enum.map(out_neighbors, fn vertex_id ->
-        score = Map.get(search.scores, vertex_id, 0)
-        visits = Map.get(search.visits, vertex_id, 0)
+        score = score(search, vertex_id)
+        visits = visits(search, vertex_id)
 
         {vertex_id, score, visits}
       end)
@@ -193,9 +193,14 @@ defmodule MCTS.Search do
   end
 
   defp edge_to_solution(%Search{} = search, %Graph.Edge{label: move, v2: vertex_id}) do
-    score = search.scores[vertex_id]
-    visits = search.visits[vertex_id]
-    average_score = score / visits
+    score = score(search, vertex_id)
+    visits = visits(search, vertex_id)
+
+    average_score = if visits > 0 do
+      score / visits
+    else
+      score
+    end
 
     %{
       move: move,
@@ -205,7 +210,15 @@ defmodule MCTS.Search do
   end
 
   def root_visits(%Search{} = search) do
-    search.visits[search.root_vertex_id]
+    visits(search, search.root_vertex_id)
+  end
+
+  def visits(%Search{} = search, vertex_id) do
+    Map.get(search.visits, vertex_id, 0)
+  end
+
+  def score(%Search{} = search, vertex_id) do
+    Map.get(search.scores, vertex_id, 0)
   end
 
   def game_state(%Search{} = search, vertex_id) do
@@ -221,7 +234,7 @@ defmodule MCTS.Search do
   end
 
   def visited?(%Search{} = search, vertex_id) do
-    Map.get(search.visits, vertex_id, 0) > 0
+    visits(search, vertex_id) > 0
   end
 
   defp increment_iterations(%Search{} = search) do
