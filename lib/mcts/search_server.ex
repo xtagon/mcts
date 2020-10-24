@@ -21,6 +21,7 @@ defmodule MCTS.SearchServer do
 
   @default_game MCTS.Examples.CountingGame
   @default_timeout :infinity
+  @default_control :automatic
 
   def start(search_id, opts \\ []) do
     {registry, opts} = Keyword.pop(opts, :registry, @default_registry)
@@ -46,12 +47,20 @@ defmodule MCTS.SearchServer do
     end
   end
 
+  def search(pid, iterations \\ 1) do
+    GenServer.cast(pid, {:search, iterations})
+  end
+
   def update(pid, new_game) do
     GenServer.cast(pid, {:update, new_game})
   end
 
   def solve(pid) do
     GenServer.call(pid, :solve)
+  end
+
+  def get_search(pid) do
+    GenServer.call(pid, :get_search)
   end
 
   def stop(pid) do
@@ -62,25 +71,30 @@ defmodule MCTS.SearchServer do
   @impl true
   def init(opts) do
     search_id = Keyword.fetch!(opts, :search_id)
+    search_opts = Keyword.get(opts, :search, [])
 
     {:ok, game} = case Keyword.get(opts, :game, @default_game) do
       game_module when is_atom(game_module) -> game_module.new
       game_state -> {:ok, game_state}
     end
 
+    control = Keyword.get(opts, :control, @default_control)
     timeout = Keyword.get(opts, :timeout, @default_timeout)
-    search_opts = Keyword.get(opts, :search, [])
 
     search = Search.new(game, search_opts)
 
     state = %{
       search_id: search_id,
-      iterations: 0,
-      search: search
+      search: search,
+      control: control,
+      iterations: 0
     }
 
     stop_after(timeout)
-    step()
+
+    if control == :automatic do
+      step()
+    end
 
     {:ok, state}
   end
@@ -93,7 +107,9 @@ defmodule MCTS.SearchServer do
     |> Map.update(:iterations, 1, &(&1 + 1))
     |> Map.put(:search, new_search)
 
-    step()
+    if state.control == :automatic do
+      step()
+    end
 
     {:noreply, new_state}
   end
@@ -101,6 +117,19 @@ defmodule MCTS.SearchServer do
   @impl true
   def handle_info(:stop, state) do
     {:stop, :normal, state}
+  end
+
+  @impl true
+  def handle_cast({:search, iterations}, state) do
+    new_search = state.search
+    |> Stream.iterate(&Search.search/1)
+    |> Enum.at(iterations)
+
+    new_state = state
+    |> Map.update(:iterations, iterations, &(&1 + iterations))
+    |> Map.put(:search, new_search)
+
+    {:noreply, new_state}
   end
 
   @impl true
@@ -118,6 +147,11 @@ defmodule MCTS.SearchServer do
     {:reply, move, state}
   end
 
+  @impl true
+  def handle_call(:get_search, _from, state) do
+    {:reply, state.search, state}
+  end
+
   defp stop_after(:infinity), do: :ok
 
   defp stop_after(timeout) do
@@ -125,7 +159,7 @@ defmodule MCTS.SearchServer do
     {:ok, ref}
   end
 
-  defp step do
+  def step do
     send(self(), :step)
   end
 end
