@@ -173,8 +173,7 @@ defmodule MCTS.Search do
     new_transpositions = Map.put_new(search.transpositions, new_root_vertex_id, new_root_game_state)
 
     new_graph = if Graph.has_vertex?(search.graph, new_root_vertex_id) do
-      reachable = Graph.reachable(search.graph, [new_root_vertex_id])
-      Graph.subgraph(search.graph, reachable)
+      search.graph
     else
       Graph.new |> Graph.add_vertex(new_root_vertex_id)
     end
