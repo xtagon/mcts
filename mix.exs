@@ -48,6 +48,7 @@ defmodule MCTS.MixProject do
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.23", only: :dev, runtime: false},
       {:excoveralls, "~> 0.13", only: :test},
+      {:perpetual, github: "xtagon/perpetual", branch: "edge"},
       {:libgraph, "~> 0.13.3"}
     ]
   end
