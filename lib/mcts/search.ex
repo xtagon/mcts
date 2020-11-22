@@ -19,7 +19,8 @@ defmodule MCTS.Search do
   alias MCTS.Policies
 
   def new(%game{} = game_state, opts \\ []) do
-    selection_policy = Keyword.get(opts, :selection_policy, &Policies.min_visits_selection_policy/1)
+    uct_exploration_constant = Keyword.get(opts, :uct_exploration_constant, 2.0)
+    selection_policy = Keyword.get(opts, :selection_policy, Policies.uct_selection_policy(uct_exploration_constant))
     expansion_policy = Keyword.get(opts, :expansion_policy, &Policies.first_policy/1)
     move_policy = Keyword.get(opts, :move_policy, &Policies.random_policy/1)
     score_policy = Keyword.get(opts, :score_policy, &game.score/1)
@@ -73,7 +74,9 @@ defmodule MCTS.Search do
         {vertex_id, score, visits}
       end)
 
-      selected_vertex_id = case search.selection_policy.(choices) do
+      parent_visits = visits(search, current_vertex_id)
+
+      selected_vertex_id = case search.selection_policy.(choices, parent_visits) do
         {vertex_id, _score, _visits} -> vertex_id
         vertex_id -> vertex_id
       end
