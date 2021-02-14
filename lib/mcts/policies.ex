@@ -17,7 +17,7 @@ defmodule MCTS.Policies do
     fn choices, parent_visits ->
       Enum.find(choices, fn {_vertex_id, _score, visits} ->
         visits == 0
-      end) || Enum.max_by(choices, fn {_vertex_id, score, visits} ->
+      end) || Enum.max_by(Enum.shuffle(choices), fn {_vertex_id, score, visits} ->
         exploitation_term = score / visits
         uct(exploitation_term, exploration_constant, parent_visits, visits)
       end)
