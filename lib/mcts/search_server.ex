@@ -90,7 +90,7 @@ defmodule MCTS.SearchServer do
     search_opts = Keyword.get(opts, :search, [])
 
     {:ok, game} = case Keyword.get(opts, :game, @default_game) do
-      game_module when is_atom(game_module) -> game_module.new
+      game_module when is_atom(game_module) -> game_module.new()
       game_state -> {:ok, game_state}
     end
 
