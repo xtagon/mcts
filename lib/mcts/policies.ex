@@ -18,10 +18,13 @@ defmodule MCTS.Policies do
       Enum.find(choices, fn {_vertex_id, _score, visits} ->
         visits == 0
       end) || Enum.max_by(choices, fn {_vertex_id, score, visits} ->
-        score / visits + exploration_constant * :math.sqrt(
-          :math.log(1 + parent_visits) / visits
-        )
+        exploitation_term = score / visits
+        uct(exploitation_term, exploration_constant, parent_visits, visits)
       end)
     end
+  end
+
+  defp uct(q, c, n, n_prime) do
+    q + c * :math.sqrt(:math.log(n) / n_prime)
   end
 end
